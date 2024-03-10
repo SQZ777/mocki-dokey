@@ -6,9 +6,6 @@ const { loadMockResponses, saveMockResponses } = require('../utils/mockResponses
 const { handleRequestForward, handleMockResponse } = require('../utils/requestHandler');
 const axios = require('axios');
 
-// 定義路由處理邏輯...
-// 例如：router.post('/setup', (req, res) => { ... });
-
 router.get('/', (req, res) => {
     res.send('Mock API Server is running!');
 });
@@ -23,7 +20,7 @@ router.post('/setup', (req, res) => {
     const { path, method, response } = req.body;
     const key = `${method.toUpperCase()} ${path}`;
     mockResponses[key] = response;
-    saveMockResponses(mockResponses); // 保存更改
+    saveMockResponses(mockResponses);
     res.status(200).send({ message: 'Mock response setup successfully.' });
 });
 
@@ -31,17 +28,17 @@ router.post('/set-forward', (req, res) => {
     const { path, forwardTo } = req.body;
     const key = `FORWARD ${path}`;
     mockResponses[key] = { forwardTo };
-    saveMockResponses(mockResponses); // 保存更改
+    saveMockResponses(mockResponses);
     res.status(200).send({ message: 'Proxy setup successfully.' });
 });
 
 router.get('/download-mock-responses', (req, res) => {
-    const file = './mockResponses.json'; // 確保這個路徑指向你的mockResponses檔案
-    res.download(file); // 提供檔案下載
+    const file = './mockResponses.json';
+    res.download(file);
 });
 
 router.delete('/delete-rule', (req, res) => {
-    const { path, method } = req.body; // 假設用戶將要刪除的規則的方法和路徑作為請求體的一部分發送
+    const { path, method } = req.body;
     let keyToDelete;
     if (method) {
         keyToDelete = `${method.toUpperCase()} ${path}`;
