@@ -36,21 +36,17 @@ router.get('/download-mock-responses', (req, res) => {
 
 router.delete('/delete-rule', (req, res) => {
     const { path, method } = req.body; // 假設用戶將要刪除的規則的方法和路徑作為請求體的一部分發送
-    const mockResponseKey = `${method.toUpperCase()} ${path}`;
-    const forwardKey = `FORWARD ${path}`;
-
-    // 檢查並刪除mock響應規則
-    mockResponses = loadMockResponses();
-    if (mockResponses[mockResponseKey]) {
-        delete mockResponses[mockResponseKey];
-        res.send({ message: 'Mock response rule deleted successfully.' });
+    let keyToDelete;
+    if (method) {
+        keyToDelete = `${method.toUpperCase()} ${path}`;
+    }else{
+        keyToDelete = `FORWARD ${path}`;
     }
-    // 檢查並刪除轉發規則
-    else if (mockResponses[forwardKey]) {
-        delete mockResponses[forwardKey];
-        res.send({ message: 'Forward rule deleted successfully.' });
+    if (mockResponses[keyToDelete]) {
+        delete mockResponses[keyToDelete];
+        res.send({ message: `${keyToDelete} rule deleted successfully.` });
     } else {
-        res.status(404).send({ message: 'Rule not found.' });
+        res.status(404).send({ message: `${keyToDelete} Rule not found.` });
     }
     saveMockResponses(mockResponses);
 });
