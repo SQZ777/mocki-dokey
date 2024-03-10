@@ -1,0 +1,11 @@
+{
+  "GET /serviceA/api/test123": {
+    "status": 200,
+    "body": {
+      "message": "This is a mock response123"
+    }
+  },
+  "FORWARD /serviceA": {
+    "forwardTo": "https://5b521e36d9b92700141c98ec.mockapi.io"
+  }
+}
