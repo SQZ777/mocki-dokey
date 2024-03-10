@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const { loadMockResponses, saveMockResponses } = require('../utils/mockResponsesHandler');
+
+const { handleRequestForward, handleMockResponse } = require('../utils/requestHandler');
 const axios = require('axios');
 
 // 定義路由處理邏輯...
@@ -9,6 +11,10 @@ const axios = require('axios');
 
 router.get('/', (req, res) => {
     res.send('Mock API Server is running!');
+});
+
+router.get('/rules', (req, res) => {
+    res.send(loadMockResponses());
 });
 
 let mockResponses = loadMockResponses();
@@ -39,7 +45,7 @@ router.delete('/delete-rule', (req, res) => {
     let keyToDelete;
     if (method) {
         keyToDelete = `${method.toUpperCase()} ${path}`;
-    }else{
+    } else {
         keyToDelete = `FORWARD ${path}`;
     }
     if (mockResponses[keyToDelete]) {
@@ -51,48 +57,12 @@ router.delete('/delete-rule', (req, res) => {
     saveMockResponses(mockResponses);
 });
 
-router.use(async (req, res, next) => {
-    const mockResponseKey = `${req.method} ${req.path}`;
-    mockResponses = loadMockResponses();
-    if (mockResponses[mockResponseKey]) {
-        return res.status(mockResponses[mockResponseKey].status).send(mockResponses[mockResponseKey].body);
-    }
-
-    const forwardPrefix = Object.keys(mockResponses).find(key =>
-        key.startsWith('FORWARD ') && req.path.startsWith(key.replace('FORWARD ', ''))
-    );
-
-    if (forwardPrefix) {
-        const config = mockResponses[forwardPrefix];
-        if (config && config.forwardTo) {
-            try {
-                const baseForwardPath = forwardPrefix.replace('FORWARD ', '');
-                const pathSuffix = req.path.substring(baseForwardPath.length);
-                const targetUrl = new URL(pathSuffix || '/', config.forwardTo).href;
-
-                const response = await axios({
-                    method: req.method,
-                    url: targetUrl,
-                    data: req.body,
-                    headers: { ...req.headers, host: new URL(config.forwardTo).host },
-                    responseType: 'stream'
-                });
-
-                // 轉發回應頭部
-                res.set(response.headers);
-                // 轉發狀態碼
-                res.status(response.status);
-                // 將回應體轉發回客戶端
-                response.data.pipe(res);
-            } catch (error) {
-                console.error(error);
-                res.status(500).send('Error forwarding request');
-            }
-        } else {
-            next();
-        }
-    }
+router.use((req, res, next) => {
+    handleMockResponse(req, res, next);
 });
 
+router.use((req, res, next) => {
+    handleRequestForward(req, res, next);
+});
 
 module.exports = router;
