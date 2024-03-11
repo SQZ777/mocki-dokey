@@ -4,7 +4,7 @@ const router = express.Router();
 const { loadMockResponses, saveMockResponses } = require('../utils/mockResponsesHandler');
 
 const { handleRequestForward, handleMockResponse } = require('../utils/requestHandler');
-const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
 
 router.get('/', (req, res) => {
     res.send('Mock API Server is running!');
@@ -17,9 +17,11 @@ router.get('/rules', (req, res) => {
 let mockResponses = loadMockResponses();
 
 router.post('/setup', (req, res) => {
-    const { path, method, response } = req.body;
+    let { path, method, response } = req.body;
     const key = `${method.toUpperCase()} ${path}`;
-    mockResponses[key] = response;
+    response.ruleId = uuidv4();
+    
+    mockResponses[key] = {response};
     saveMockResponses(mockResponses);
     res.status(200).send({ message: 'Mock response setup successfully.' });
 });
